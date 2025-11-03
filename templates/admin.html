@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - Faculty Items Issuer & Logger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #eef2f3, #d9e4ec);
+      font-family: "Poppins", sans-serif;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      margin-top: 40px;
+      max-width: 1200px;
+    }
+
+    th {
+      background: #003566;
+      color: white;
+      text-align: center;
+    }
+
+    td {
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 4px 10px;
+    }
+
+    .btn-delete:hover {
+      background: #b52d3a;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 25px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: #003566;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #00509e;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="fw-bold text-primary">Admin Dashboard</h3>
+
+      <div>
+        <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addFacultyModal">Add Faculty</button>
+        <a href="/download_logs" class="btn btn-primary me-2">Download Logs</a>
+        <button class="btn btn-danger" onclick="deleteAll()"> Delete All</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Faculty ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th>Action</th>
+            <th>Date & Time</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in records %}
+          <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] }}</td>
+            <td>{{ row[5] }}</td>
+            <td>
+              {% if row[6] == 'Issue' %}
+              <span class="badge bg-warning text-dark">Issued</span>
+              {% elif row[6] == 'Return' %}
+              <span class="badge bg-success">Returned</span>
+              {% else %}
+              <span class="badge bg-secondary">Unknown</span>
+              {% endif %}
+            </td>
+            <td>{{ row[7] }}</td>
+            <td>
+              <button class="btn-delete" onclick="deleteRecord('{{ row[0] }}')">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+      <a href="/" class="btn btn-outline-secondary px-4">Back to Home</a>
+      <a href="/logout" class="btn btn-outline-danger px-4">Logout</a>
+    </div>
+
+    <footer class="mt-4">Made by <strong>Vraj Patel</strong></footer>
+  </div>
+
+  <!-- Add Faculty Modal -->
+  <div class="modal fade" id="addFacultyModal" tabindex="-1" aria-labelledby="addFacultyLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-semibold" id="addFacultyLabel">Add New Faculty</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addFacultyForm">
+            <div class="mb-3">
+              <label for="faculty_id" class="form-label">Faculty ID</label>
+              <input type="text" id="faculty_id" class="form-control" placeholder="Enter ID" required>
+            </div>
+            <div class="mb-3">
+              <label for="faculty_name" class="form-label">Name</label>
+              <input type="text" id="faculty_name" class="form-control" placeholder="Enter Name" required>
+            </div>
+            <div class="mb-3">
+              <label for="faculty_dept" class="form-label">Department</label>
+              <input type="text" id="faculty_dept" class="form-control" placeholder="Enter Department" required>
+            </div>
+            <div class="mb-3">
+              <label for="faculty_email" class="form-label">Email</label>
+              <input type="email" id="faculty_email" class="form-control" placeholder="Enter Email" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" id="saveFacultyBtn">Save Faculty</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    async function deleteRecord(id) {
+      if (!confirm("Delete this record?")) return;
+      const res = await fetch(`/delete_entry/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      alert(data.message);
+      if (data.status === "success") location.reload();
+    }
+
+    async function deleteAll() {
+      if (!confirm("⚠️ Delete ALL entries permanently?")) return;
+      const res = await fetch(`/delete_all`, { method: "DELETE" });
+      const data = await res.json();
+      alert(data.message);
+      if (data.status === "success") location.reload();
+    }
+
+    document.getElementById("saveFacultyBtn").addEventListener("click", async () => {
+      const id = document.getElementById("faculty_id").value.trim();
+      const name = document.getElementById("faculty_name").value.trim();
+      const dept = document.getElementById("faculty_dept").value.trim();
+      const email = document.getElementById("faculty_email").value.trim();
+
+      if (!id || !name || !dept || !email) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      const res = await fetch("/add_professor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, name, department: dept, email })
+      });
+
+      const data = await res.json();
+      alert(data.message);
+      if (data.status === "success") location.reload();
+    });
+  </script>
+</body>
+</html>
